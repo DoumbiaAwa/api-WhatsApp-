@@ -1,22 +1,22 @@
 <?php return array(
     'root' => array(
-        'pretty_version' => '1.0.0+no-version-set',
-        'version' => '1.0.0.0',
+        'pretty_version' => 'dev-main',
+        'version' => 'dev-main',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
-        'reference' => null,
-        'name' => 'awa/apikoumi.php',
+        'reference' => 'd4a7fc5e0f44b9d05f1fa73b5faec1fc5507ca95',
+        'name' => '__root__',
         'dev' => true,
     ),
     'versions' => array(
-        'awa/apikoumi.php' => array(
-            'pretty_version' => '1.0.0+no-version-set',
-            'version' => '1.0.0.0',
+        '__root__' => array(
+            'pretty_version' => 'dev-main',
+            'version' => 'dev-main',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
-            'reference' => null,
+            'reference' => 'd4a7fc5e0f44b9d05f1fa73b5faec1fc5507ca95',
             'dev_requirement' => false,
         ),
         'green-api/whatsapp-api-client-php' => array(
@@ -26,6 +26,15 @@
             'install_path' => __DIR__ . '/../green-api/whatsapp-api-client-php',
             'aliases' => array(),
             'reference' => 'fcf9da11df970bc3832b3b1586f0d33fcd2948fa',
+            'dev_requirement' => false,
+        ),
+        'tecnickcom/tcpdf' => array(
+            'pretty_version' => '6.7.4',
+            'version' => '6.7.4.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../tecnickcom/tcpdf',
+            'aliases' => array(),
+            'reference' => 'd4adef47ca21c90e6483d59dcb9e5b1023696937',
             'dev_requirement' => false,
         ),
     ),

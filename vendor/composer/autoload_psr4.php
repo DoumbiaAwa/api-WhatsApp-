@@ -7,5 +7,4 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'GreenApi\\RestApi\\' => array($vendorDir . '/green-api/whatsapp-api-client-php/src'),
-    'Awa\\ApikoumiPhp\\' => array($baseDir . '/src'),
 );
