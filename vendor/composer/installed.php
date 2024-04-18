@@ -5,7 +5,7 @@
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
-        'reference' => 'd4a7fc5e0f44b9d05f1fa73b5faec1fc5507ca95',
+        'reference' => '513d36bc09b727bf8d5ee098bbd33caaea74df51',
         'name' => '__root__',
         'dev' => true,
     ),
@@ -16,7 +16,7 @@
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
-            'reference' => 'd4a7fc5e0f44b9d05f1fa73b5faec1fc5507ca95',
+            'reference' => '513d36bc09b727bf8d5ee098bbd33caaea74df51',
             'dev_requirement' => false,
         ),
         'green-api/whatsapp-api-client-php' => array(

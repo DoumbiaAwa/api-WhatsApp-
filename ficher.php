@@ -57,11 +57,12 @@ function onIncomingMessageReceived($body, $greenApi) {
 
     $message = "Bonjour *" . $senderName . "*, bienvenue sur la plateforme *Koumi*.\r\n"
         . "Veuillez choisir parmi les options suivantes :\r\n"
-        . "1. Pour télécharger la fiche d'inscription\r\n"
+        . "1. Pour télécharger la fiche d'information\r\n"
         . "2. Pour rechercher un produit\r\n"
         . "3. Pour voir les boutiques\r\n"
         . "NB: *Le chiffre zero (0) vous permettra de revenir au menu principal*\r\n"
         . "Faites votre choix en envoyant le numéro correspondant :\r\n";
+        //  $greenApi->sending->sendMessage($chatId, $message);
 
     if ($messageData->typeMessage === 'textMessage') {
         if ($receivedMessage === '0') {
@@ -73,26 +74,35 @@ function onIncomingMessageReceived($body, $greenApi) {
                     case 'MAIN_MENU':
                         switch ($receivedMessage) {
                             case '1':
-
-                                sendFileByUrl($chatId, 'https://drive.google.com/file/d/1lCuNWp_x2iZ1fHMXIqJFjojqFNvELtED/view?usp=sharing', 'Votre fiche d\'inscription est prête.');
+                                $result = $greenApi->sending->sendFileByUpload($chatId, 'images\fiche.jpeg');
+                                
+                                // sendFileByUrl($chatId, 'https://drive.google.com/file/d/1-Ah7GylCtIt11huQ3GYAUKQ5zlHT9t8e/view?usp=sharing');
                                 break;
                                 
-                            case '2':
-                                $state = 'CATEGORIES'; // Changez l'état pour 'CATEGORIES'
+                                case '2':
+                                    $state = 'CATEGORIES';
+                                    // Fetching all categories from the API
+                                    $response = file_get_contents('https://koumi.ml/api-koumi/Categorie/allCategorie');
+                                    $categories = json_decode($response, true);
+                                
+                                    // Preparing the message with the list of categories
+                                    $categoryMessage = "Voici les différentes catégories, faites un choix en envoyant le numéro correspondant :\r\n";
+                                    $listCategorieCount = 1; // Initialize the counter
+                                    $listcategorie = ''; // Initialize the variable to store categories
+                                    foreach ($categories as $item) {
+                                        $listcategorie .= "*" . $listCategorieCount++ . "* : " . $item['libelleCategorie'] . "\r\n";
+                                    }
+                                    // Sending the list of categories to the user
+                                    $greenApi->sending->sendMessage($chatId, $listcategorie);
+                                    break;
+                                
+                                
                                
-                                $response = file_get_contents('http://localhost:9000/api-koumi/Categorie/allCategorie');
-                                $categories = json_decode($response, true);
-                                $categoryMessage = "Voici les différentes catégories, faites un choix en envoyant le numéro correspondant :\r\n";
-                                foreach ($categories as $key => $category) {
-                                    $categoryMessage .= ($key + 1) . ". " . $category['libelleCategorie'] . "\r\n";
-                                }
-                                $greenApi->sending->sendMessage($chatId, $categoryMessage);
-                                break;
                                 
                                case '3':
 
                                 $state = 'MAGASIN'; // Changez l'état pour 'CATEGORIES'
-                                $response = file_get_contents('http://localhost:9000/api-koumi/Magasin/getAllMagagin');
+                                $response = file_get_contents('https://koumi.ml/api-koumi/Magasin/getAllMagagin');
                                 $data = json_decode($response, true);
                                 
                                 $listboutique= " Voici les différentes boutiques  *Faites un choix*:\r\n";
@@ -106,17 +116,68 @@ function onIncomingMessageReceived($body, $greenApi) {
                             
                         }
 
+break;
 
-                        break;
-                    case 'CATEGORIES':
+case 'CATEGORIES':
+    if (is_numeric($receivedMessage)) {
+        // Récupérer les catégories depuis l'API
+        $response = file_get_contents('https://koumi.ml/api-koumi/Categorie/allCategorie');
+        $categories = json_decode($response, true);
 
-                        break;
+        // Convertir le numéro de catégorie reçu en index de tableau
+        $categorieIndex = intval($receivedMessage) - 1;
+
+        if ($categorieIndex >= 0 && $categorieIndex < count($categories)) {
+            // Récupérer l'ID de la catégorie sélectionnée
+            $selectedCategoryId = $categories[$categorieIndex]['idCategorieProduit'];
+
+            // Récupérer les produits de la catégorie sélectionnée depuis l'API
+            $productsResponse = file_get_contents('https://koumi.ml/api-koumi/Stock/categorieProduit/' . $selectedCategoryId);
+            $products = json_decode($productsResponse, true);
+
+            if (empty($products)) {
+                // Aucun produit disponible dans cette catégorie
+                $noProductsMessage = "Il n'y a aucun produit disponible dans cette catégorie.";
+                $greenApi->sending->sendMessage($chatId, $noProductsMessage);
+            } else {
+                // Construire le message des produits
+                $productMessage = "Voici les produits contenus dans " . $categories[$categorieIndex]['libelleCategorie'] . " :\r\n";
+                foreach ($products as $product) {
+                    $productMessage .= "*Nom* : " . $product['nomProduit'] . "\r\n";
+                    $productMessage .= "*Forme* : " . $product['formeProduit'] . "\r\n";
+                    $productMessage .= "*Date de production* : " . $product['dateProduction'] . "\r\n";
+                    $productMessage .= "*Quantité en stock* : " . $product['quantiteStock'] . "\r\n";
+                    $productMessage .= "*Prix* : " . $product['prix'] . "\r\n";
+                    $productMessage .= "*Description* : " . $product['descriptionStock'] . "\r\n";
+                    $productMessage .= "-----------------------------\r\n";
+                }
+
+                // Envoyer le message des produits à l'utilisateur
+                $greenApi->sending->sendMessage($chatId, $productMessage);
+            }
+        } else {
+            // Le numéro de catégorie saisi n'existe pas, envoyer un message d'erreur
+            $errorMessage = "Le numéro de la catégorie que vous avez saisi n'est pas valide. Veuillez choisir un numéro valide ou 0 pour quitter.";
+            $greenApi->sending->sendMessage($chatId, $errorMessage);
+        }
+    }
+    break;
+
+                                       
+                      
 
                     case 'MAGASIN':
                         
                         if (is_numeric($receivedMessage)) {
-                            $response = file_get_contents('http://localhost:9000/api-koumi/Magasin/getAllMagagin');
+                            $response = file_get_contents('https://koumi.ml/api-koumi/Magasin/getAllMagagin');
+                            if ($response === FALSE) {
+                                error_log("Erreur lors de la récupération des données de l'API");
+                            }
                             $data = json_decode($response, true);
+                            if (json_last_error() !== JSON_ERROR_NONE) {
+                                error_log("Erreur lors du décodage du JSON: " . json_last_error_msg());
+                            }
+
                             // Convertissez le numéro reçu en index de tableau
                             $magasinIndex = intval($receivedMessage) - 1;
                             // Récupérez les informations du magasin à partir de l'index
@@ -125,21 +186,25 @@ function onIncomingMessageReceived($body, $greenApi) {
                             if ($magasinIndex >= 0 && $magasinIndex < count($data)) {
                                 $magasinDetails = $data[$magasinIndex];
                                 // Construisez et envoyez le message avec les informations du magasin
-                                $infoMagasinMessage = "Informations sur le magasin sélectionné :\r\n";
+                                $infoMagasinMessage = "Informations sur *" .  $magasinDetails['nomMagasin'] . "* :\r\n";
                                 $infoMagasinMessage .= "*Nom* : " .  $magasinDetails['nomMagasin'] . "\r\n";
                                 $infoMagasinMessage .= "*Localité* : " . $magasinDetails['localiteMagasin'] . "\r\n";
                                 $infoMagasinMessage .= "*Contact* : " . $magasinDetails['contactMagasin'] . "\r\n";
+                                $infoMagasinMessage .= "*Latitude* : " . $magasinDetails['latitude'] . "\r\n";
+                                $infoMagasinMessage .= "*Longitude* : " . $magasinDetails['longitude'] . "\r\n";
+                                $infoMagasinMessage .= "*Photo* : " . $magasinDetails['photo'] . "\r\n";
+                                
+                                // $infoMessage = "Veuillez choisir un numéro de boutique  ou 0 pour quitter. \r\n";
+
                                 // ...
                                 $greenApi->sending->sendMessage($chatId, $infoMagasinMessage);
-                            } else {
+                            }
+                            
+                            else {
                                 // Le numéro de la boutique saisi n'existe pas, envoyez un message d'erreur
                                 $errorMessage = "Le numéro de la boutique que vous avez saisi n'est pas valide. Veuillez choisir un numéro ou 0 pour quitter.";
                                 $greenApi->sending->sendMessage($chatId, $errorMessage);
                             }
-                        } else {
-                            // Si le message reçu n'est pas un numéro, renvoyez l'utilisateur au menu principal
-                            $state = 'MAIN_MENU';
-                            $greenApi->sending->sendMessage($chatId, $message);
                         }
     
  
@@ -148,9 +213,8 @@ function onIncomingMessageReceived($body, $greenApi) {
                         break;
                 }
                 
-                        
-                    // default:
-                    //     break;
+ 
+                
                 
             } else {
                 $state = 'MAIN_MENU';
@@ -251,4 +315,4 @@ function onStatusInstanceChanged($body)
     print('At ' . $eventDate . ' status instance = ' . $statusInstance) . PHP_EOL;
 }
 
-?>
+?> 
